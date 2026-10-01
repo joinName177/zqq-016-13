@@ -48,8 +48,16 @@ function refreshView() {
         refreshView();
       },
       onDeleteSpecimen: (id: string) => {
-        specimenAdapter.remove(id);
-        refreshView();
+        try {
+          specimenAdapter.remove(id);
+        } catch (err) {
+          // 删除失败（如存储空间不足）：存储中的原列表未被改动，提示用户后照常刷新视图恢复展示
+          console.error('移出标本失败：', err);
+          alert('移出标本失败，标本集已恢复原列表，请稍后重试。');
+        } finally {
+          // 无论删除成功与否都重新渲染，确保标本数量、列表与空状态同步更新
+          refreshView();
+        }
       },
       onToggleCabinet: (open: boolean) => {
         isCabinetOpen = open;
