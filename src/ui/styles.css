@@ -367,6 +367,40 @@ body {
   color: var(--gold);
 }
 
+/* Cabinet filter toolbar */
+.cabinet-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.specimen-filter-input {
+  flex: 1;
+  min-width: 220px;
+  background: var(--tree-card);
+  border: 1px solid var(--tree-border);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: var(--font-serif);
+}
+
+.specimen-filter-input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold-glow);
+}
+
+.specimen-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 .specimens-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

@@ -6,6 +6,7 @@ export interface TreeUIHandlers {
   onPruneNode: (nodeId: string) => void;
   onHarvestNode: (nodeId: string) => void;
   onDeleteSpecimen: (id: string) => void;
+  onFilterSpecimens: (keyword: string) => void;
   onToggleCabinet: (open: boolean) => void;
 }
 
@@ -15,7 +16,8 @@ export function renderTreeApp(
   specimens: LifeSpecimen[],
   isCabinetOpen: boolean,
   presets: string[],
-  handlers: TreeUIHandlers
+  handlers: TreeUIHandlers,
+  specimenFilter: string = ''
 ) {
   const esc = (s: string) =>
     s.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t] || t));
@@ -29,6 +31,16 @@ export function renderTreeApp(
   });
 
   const eraTitles = ['起点分歧点', '+1年·涟漪微漾', '+3年·风向转折', '+5年·航道分野', '+10年·宿命标本'];
+
+  // 标本馆筛选：按标题 / 格言 / 领域标签 / 演化链关键词匹配
+  const keyword = specimenFilter.trim().toLowerCase();
+  const filteredSpecimens = keyword
+    ? specimens.filter(s =>
+        [s.title, s.quote, s.butterflyTag, s.eraLabel, s.assumption, ...s.pathWay]
+          .some(text => text.toLowerCase().includes(keyword))
+      )
+    : specimens;
+  const isFilterActive = keyword.length > 0;
 
   container.innerHTML = `
     <div class="tree-app">
@@ -128,8 +140,29 @@ export function renderTreeApp(
               </div>
             `
                 : `
+              <div class="cabinet-toolbar">
+                <input type="text" class="specimen-filter-input" id="specimenFilterInput"
+                       value="${esc(specimenFilter)}"
+                       placeholder="🔍 按标题 / 格言 / 领域 / 演化链筛选标本…" />
+                <span class="specimen-count" id="specimenCount">
+                  ${
+                    isFilterActive
+                      ? `筛选结果：${filteredSpecimens.length} / 共 ${specimens.length} 件标本`
+                      : `共 ${specimens.length} 件标本`
+                  }
+                </span>
+              </div>
+
+            ${
+              filteredSpecimens.length === 0
+                ? `
+              <div style="text-align:center;padding:40px;color:var(--text-muted);">
+                🍂 没有找到与「${esc(specimenFilter.trim())}」匹配的标本，换个关键词试试吧。
+              </div>
+            `
+                : `
               <div class="specimens-grid">
-                ${specimens
+                ${filteredSpecimens
                   .map(
                     s => `
                   <div class="specimen-card">
@@ -152,6 +185,8 @@ export function renderTreeApp(
               <div style="text-align:right;margin-top:24px;">
                 <button class="cabinet-btn" onclick="window.print()">🖨️ 导出 / 打印标本图册</button>
               </div>
+            `
+            }
             `
             }
           </div>
@@ -219,5 +254,15 @@ export function renderTreeApp(
       const delId = btn.getAttribute('data-delid');
       if (delId) handlers.onDeleteSpecimen(delId);
     });
+  });
+
+  // 标本馆关键词筛选：重渲染后保持焦点与光标位置
+  const filterEl = container.querySelector('#specimenFilterInput') as HTMLInputElement | null;
+  filterEl?.addEventListener('input', () => {
+    const cursor = filterEl.selectionStart;
+    handlers.onFilterSpecimens(filterEl.value);
+    const restored = container.querySelector('#specimenFilterInput') as HTMLInputElement | null;
+    restored?.focus();
+    if (cursor !== null) restored?.setSelectionRange(cursor, cursor);
   });
 }
